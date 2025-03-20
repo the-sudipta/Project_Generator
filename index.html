@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- ✅ Load /PHP/index.js FIRST so projectConfigs is available -->
+    <script src="Project_Templates/PHP/index.js"></script>
+    <script src="Project_Templates/Java/index.js"></script>
+
+    <style>
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            text-align: center;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease-in-out;
+        }
+        h1 {
+            font-size: 2.5em;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        }
+        label {
+            font-size: 1.2em;
+            margin-top: 20px;
+            display: block;
+        }
+        input {
+            font-size: 1em;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: none;
+            transition: all 0.3s ease-in-out;
+            background-color: #333;
+            color: white;
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+        input:hover {
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+        }
+        button {
+            font-size: 1.2em;
+            padding: 12px;
+            margin-top: 20px;
+            border-radius: 8px;
+            border: none;
+            background-color: #00bcd4;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        }
+        button:hover {
+            background-color: #008c9e;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 1);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            transition: all 0.3s ease-in-out;
+            display: inline-block;
+        }
+        .container:hover {
+            box-shadow: 0 0 30px rgba(0, 255, 255, 1);
+        }
+
+        /* Custom Dropdown */
+        .custom-dropdown {
+            position: relative;
+            width: 250px;
+            margin: 20px auto;
+        }
+        .dropdown-selected {
+            background-color: #222;
+            color: cyan;
+            padding: 15px;
+            font-size: 1.2em;
+            border: 2px solid cyan;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+        }
+        .dropdown-selected:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 255, 1);
+            transform: scale(1.05);
+        }
+        .dropdown-options {
+            position: absolute;
+            width: 100%;
+            background-color: #111;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease-in-out;
+            visibility: hidden;
+            z-index: 10;
+        }
+        .custom-dropdown.active .dropdown-options {
+            opacity: 1;
+            transform: translateY(0);
+            visibility: visible;
+        }
+
+        .custom-dropdown.closing .dropdown-options {
+            opacity: 0;
+            transform: translateY(-10px);
+            visibility: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .dropdown-options div {
+            padding: 12px;
+            color: cyan;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        .dropdown-options div:last-child {
+            border-bottom: none;
+        }
+        .dropdown-options div:hover {
+            background-color: cyan;
+            color: black;
+            transform: scale(1.1);
+            font-weight: bold;
+        }
+
+        /* Custom Input Field */
+        .custom-input {
+            position: relative;
+            width: 250px;
+            margin: 10px auto;
+        }
+        .custom-input-box {
+            background-color: #222;
+            color: cyan;
+            padding: 15px;
+            font-size: 1.1em;
+            border: 2px solid cyan;
+            border-radius: 8px;
+            text-align: left;
+            cursor: text;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+            min-height: 24px;
+        }
+        .custom-input-box:hover, .custom-input-box:focus {
+            box-shadow: 0 0 20px rgba(0, 255, 255, 1);
+            transform: scale(1.02);
+        }
+        .custom-input-box:empty::before {
+            content: attr(data-placeholder);
+            color: rgba(0, 255, 255, 0.5);
+        }
+
+    </style>
+
+    <style>
+
+        :root {
+            --primary: #275EFE;
+            --primary-light: #7699FF;
+            --dark: #1C212E;
+            --grey-dark: #3F4656;
+            --grey: #6C7486;
+            --grey-light: #CDD9ED;
+            --white: #FFF;
+            --green: #16BF78;
+            --sand: #DCB773;
+            --sand-light: #EDD9A9;
+        }
+        .order {
+            appearance: none;
+            border: 0;
+            background: var(--dark);
+            position: relative;
+            height: 63px;
+            width: 240px;
+            padding: 0;
+            outline: none;
+            cursor: pointer;
+            border-radius: 32px;
+            -webkit-mask-image: -webkit-radial-gradient(white, black);
+            -webkit-tap-highlight-color: transparent;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .order span {
+            --o: 1;
+            position: absolute;
+            left: 0;
+            right: 0;
+            text-align: center;
+            top: 19px;
+            line-height: 24px;
+            color: var(--white);
+            font-size: 16px;
+            font-weight: 500;
+            opacity: var(--o);
+            transition: opacity 0.3s ease;
+        }
+        .order span.default {
+            transition-delay: 0.3s;
+        }
+        .order span.success {
+            --offset: 16px;
+            --o: 0;
+        }
+        .order span.success svg {
+            width: 12px;
+            height: 10px;
+            display: inline-block;
+            vertical-align: top;
+            fill: none;
+            margin: 7px 0 0 4px;
+            stroke: var(--green);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 16px;
+            stroke-dashoffset: var(--offset);
+            transition: stroke-dashoffset 0.3s ease;
+        }
+        .order:active {
+            transform: scale(0.96);
+        }
+        .order .lines {
+            opacity: 0;
+            position: absolute;
+            height: 3px;
+            background: var(--white);
+            border-radius: 2px;
+            width: 6px;
+            top: 30px;
+            left: 100%;
+            box-shadow: 15px 0 0 var(--white), 30px 0 0 var(--white), 45px 0 0 var(--white), 60px 0 0 var(--white), 75px 0 0 var(--white), 90px 0 0 var(--white), 105px 0 0 var(--white), 120px 0 0 var(--white), 135px 0 0 var(--white), 150px 0 0 var(--white), 165px 0 0 var(--white), 180px 0 0 var(--white), 195px 0 0 var(--white), 210px 0 0 var(--white), 225px 0 0 var(--white), 240px 0 0 var(--white), 255px 0 0 var(--white), 270px 0 0 var(--white), 285px 0 0 var(--white), 300px 0 0 var(--white), 315px 0 0 var(--white), 330px 0 0 var(--white);
+        }
+        .order .back, .order .box {
+            --start: var(--white);
+            --stop: var(--grey-light);
+            border-radius: 2px;
+            background: linear-gradient(var(--start), var(--stop));
+            position: absolute;
+        }
+        .order .truck {
+            width: 60px;
+            height: 41px;
+            left: 100%;
+            z-index: 1;
+            top: 11px;
+            position: absolute;
+            transform: translateX(24px);
+        }
+        .order .truck:before, .order .truck:after {
+            --r: -90deg;
+            content: '';
+            height: 2px;
+            width: 20px;
+            right: 58px;
+            position: absolute;
+            display: block;
+            background: var(--white);
+            border-radius: 1px;
+            transform-origin: 100% 50%;
+            transform: rotate(var(--r));
+        }
+        .order .truck:before {
+            top: 4px;
+        }
+        .order .truck:after {
+            --r: 90deg;
+            bottom: 4px;
+        }
+        .order .truck .back {
+            left: 0;
+            top: 0;
+            width: 60px;
+            height: 41px;
+            z-index: 1;
+        }
+        .order .truck .front {
+            overflow: hidden;
+            position: absolute;
+            border-radius: 2px 9px 9px 2px;
+            width: 26px;
+            height: 41px;
+            left: 60px;
+        }
+        .order .truck .front:before, .order .truck .front:after {
+            content: '';
+            position: absolute;
+            display: block;
+        }
+        .order .truck .front:before {
+            height: 13px;
+            width: 2px;
+            left: 0;
+            top: 14px;
+            background: linear-gradient(var(--grey), var(--grey-dark));
+        }
+        .order .truck .front:after {
+            border-radius: 2px 9px 9px 2px;
+            background: var(--primary);
+            width: 24px;
+            height: 41px;
+            right: 0;
+        }
+        .order .truck .front .window {
+            overflow: hidden;
+            border-radius: 2px 8px 8px 2px;
+            background: var(--primary-light);
+            transform: perspective(4px) rotateY(3deg);
+            width: 22px;
+            height: 41px;
+            position: absolute;
+            left: 2px;
+            top: 0;
+            z-index: 1;
+            transform-origin: 0 50%;
+        }
+        .order .truck .front .window:before, .order .truck .front .window:after {
+            content: '';
+            position: absolute;
+            right: 0;
+        }
+        .order .truck .front .window:before {
+            top: 0;
+            bottom: 0;
+            width: 14px;
+            background: var(--dark);
+        }
+        .order .truck .front .window:after {
+            width: 14px;
+            top: 7px;
+            height: 4px;
+            position: absolute;
+            background: rgba(255, 255, 255, 0.14);
+            transform: skewY(14deg);
+            box-shadow: 0 7px 0 rgba(255, 255, 255, 0.14);
+        }
+        .order .truck .light {
+            width: 3px;
+            height: 8px;
+            left: 83px;
+            transform-origin: 100% 50%;
+            position: absolute;
+            border-radius: 2px;
+            transform: scaleX(0.8);
+            background: #f0dc5f;
+        }
+        .order .truck .light:before {
+            content: '';
+            height: 4px;
+            width: 7px;
+            opacity: 0;
+            transform: perspective(2px) rotateY(-15deg) scaleX(0.94);
+            position: absolute;
+            transform-origin: 0 50%;
+            left: 3px;
+            top: 50%;
+            margin-top: -2px;
+            background: linear-gradient(90deg, #f0dc5f, rgba(240, 220, 95, 0.7), rgba(240, 220, 95, 0));
+        }
+        .order .truck .light.top {
+            top: 4px;
+        }
+        .order .truck .light.bottom {
+            bottom: 4px;
+        }
+        .order .box {
+            --start: var(--sand-light);
+            --stop: var(--sand);
+            width: 21px;
+            height: 21px;
+            right: 100%;
+            top: 21px;
+        }
+        .order .box:before, .order .box:after {
+            content: '';
+            top: 10px;
+            position: absolute;
+            left: 0;
+            right: 0;
+        }
+        .order .box:before {
+            height: 3px;
+            margin-top: -1px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .order .box:after {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.15);
+        }
+        .order.animate .default {
+            --o: 0;
+            transition-delay: 0s;
+        }
+        .order.animate .success {
+            --offset: 0;
+            --o: 1;
+            transition-delay: 7s;
+        }
+        .order.animate .success svg {
+            transition-delay: 7.3s;
+        }
+        .order.animate .truck {
+            animation: truck 10s ease forwards;
+        }
+        .order.animate .truck:before {
+            animation: door1 2.4s ease forwards 0.3s;
+        }
+        .order.animate .truck:after {
+            animation: door2 2.4s ease forwards 0.6s;
+        }
+        .order.animate .truck .light:before, .order.animate .truck .light:after {
+            animation: light 10s ease forwards;
+        }
+        .order.animate .box {
+            animation: box 10s ease forwards;
+        }
+        .order.animate .lines {
+            animation: lines 10s ease forwards;
+        }
+        @keyframes truck {
+            10%, 30% {
+                transform: translateX(-164px);
+            }
+            40% {
+                transform: translateX(-104px);
+            }
+            60% {
+                transform: translateX(-224px);
+            }
+            75%, 100% {
+                transform: translateX(24px);
+            }
+        }
+        @keyframes lines {
+            0%, 30% {
+                opacity: 0;
+                transform: scaleY(0.7) translateX(0);
+            }
+            35%, 65% {
+                opacity: 1;
+            }
+            70% {
+                opacity: 0;
+            }
+            100% {
+                transform: scaleY(0.7) translateX(-400px);
+            }
+        }
+        @keyframes light {
+            0%, 30% {
+                opacity: 0;
+                transform: perspective(2px) rotateY(-15deg) scaleX(0.88);
+            }
+            40%, 100% {
+                opacity: 1;
+                transform: perspective(2px) rotateY(-15deg) scaleX(0.94);
+            }
+        }
+        @keyframes door1 {
+            30%, 50% {
+                transform: rotate(32deg);
+            }
+        }
+        @keyframes door2 {
+            30%, 50% {
+                transform: rotate(-32deg);
+            }
+        }
+        @keyframes box {
+            8%, 10% {
+                transform: translateX(40px);
+                opacity: 1;
+            }
+            25% {
+                transform: translateX(112px);
+                opacity: 1;
+            }
+            26% {
+                transform: translateX(112px);
+                opacity: 0;
+            }
+            27%, 100% {
+                transform: translateX(0px);
+                opacity: 0;
+            }
+        }
+        html {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+        * {
+            box-sizing: inherit;
+        }
+        *:before, *:after {
+            box-sizing: inherit;
+        }
+
+
+    </style>
+
+
+</head>
+<body>
+<div class="container">
+    <h1>Project Generator</h1>
+
+    <label STYLE="margin-bottom: 20px;" for="projectTitle">Project Title:</label>
+    <div id="projectTitle" class="custom-input-box" contenteditable="true" data-placeholder="Enter project title"></div>
+
+    <br>
+
+    <label for="projectType">Select Project Type:</label>
+    <div id="projectType" class="custom-dropdown">
+        <div class="dropdown-selected">Select Project Type</div>
+        <div class="dropdown-options">
+            <div data-value="nestjs">Nest.js</div>
+            <div data-value="nextjs">Next.js</div>
+            <div data-value="php">PHP</div>
+            <div data-value="java-cli">Java CLI</div>
+            <div data-value="django">Django</div>
+            <div data-value="python">Python</div>
+            <div data-value="cpp">C++</div>
+        </div>
+    </div>
+
+    <br>
+    <button
+
+            class="order"><span class="default">Generate Project</span><span class="success">Project Generated<svg viewbox="0 0 12 10">
+            <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
+        </svg></span>
+        <div class="box"></div>
+        <div class="truck">
+            <div class="back"></div>
+            <div class="front">
+                <div class="window"></div>
+            </div>
+            <div class="light top"></div>
+            <div class="light bottom"></div>
+        </div>
+        <div class="lines"></div>
+    </button>
+<!--    <button onclick="generateProject()">Generate Project</button>-->
+</div>
+
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js'></script>
+<script>
+
+
+    // Custom Dropdown Script
+    const dropdown = document.querySelector('.custom-dropdown');
+    const selected = document.querySelector('.dropdown-selected');
+    const options = document.querySelector('.dropdown-options');
+
+    dropdown.addEventListener('click', () => {
+        dropdown.classList.toggle('active');
+    });
+
+    options.querySelectorAll('div').forEach(option => {
+        option.addEventListener('click', () => {
+            selected.textContent = option.textContent;
+            selected.setAttribute('data-value', option.getAttribute('data-value'));
+            dropdown.classList.add('closing');
+            setTimeout(() => {
+                dropdown.classList.remove('active', 'closing');
+            }, 300);
+        });
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!dropdown.contains(event.target)) {
+            dropdown.classList.add('closing');
+            setTimeout(() => {
+                dropdown.classList.remove('active', 'closing');
+            }, 300);
+        }
+    });
+
+
+
+    function generateProject() {
+        // Get the project title from the contenteditable div
+        let projectTitle = document.getElementById("projectTitle").textContent.trim();
+
+        // Get the selected project type from the dropdown
+        let selectedProject = document.querySelector('.dropdown-selected').getAttribute("data-value");
+
+        // Check if the inputs are valid
+        if (!projectTitle) {
+            alert("Please enter a project title.");
+            return false; // Prevent animation
+        }
+        if (!selectedProject) {
+            alert("Please select a project type.");
+            return false; // Prevent animation
+        }
+
+        // Create a new zip file
+        let zip = new JSZip();
+        let projectFolder = zip.folder(projectTitle);
+
+        // Handle project type-specific file generation
+        if (selectedProject === "nestjs" || selectedProject === "nextjs") {
+            projectFolder.file("dependencies.txt", "axios\ntypeorm\ndotenv");
+            projectFolder.file("install.sh", `#!/bin/bash
+if [ -d "node_modules" ]; then
+    echo "Dependencies already installed."
+else
+    echo "Installing dependencies..."
+    npm install $(cat dependencies.txt)
+    echo "Starting the project..."
+    npm run dev
+fi`);
+            projectFolder.file("install.bat", `@echo off
+IF EXIST node_modules (
+    echo Dependencies already installed.
+) ELSE (
+    echo Installing dependencies...
+    for /F %%i in (dependencies.txt) do npm install %%i
+    echo Starting the project...
+    npm run dev
+)`);
+        }
+
+        if (selectedProject === "nestjs") {
+            srcFolder.file("main.js", "// Nest.js main file\n\nconsole.log('Nest.js project initialized!');");
+            configFolder.file("config.json", "{\n  \"port\": 3000,\n  \"database\": \"mongodb://localhost:27017\"\n}");
+        } else if (selectedProject === "nextjs") {
+            srcFolder.file("index.js", "// Next.js entry file\n\nconsole.log('Next.js project initialized!');");
+            configFolder.file("next.config.js", "module.exports = {\n  reactStrictMode: true,\n};");
+        } else if (selectedProject === "php") {
+
+            // ✅ Use Configs from /PHP/index.js
+            if (typeof PHP_Project_Structure !== "undefined" && PHP_Project_Structure) {
+
+                // FOLDERS ==> Root -> model, view, DOCUMENTATIONS, controller
+
+                //  CREATING FOLDERS
+                let controller_folder = projectFolder.folder("controller");
+                let model_folder = projectFolder.folder("model");
+                let view_folder = projectFolder.folder("view");
+                let resource_folder = projectFolder.folder("resource");
+
+
+                let database_sql_folder = resource_folder.folder('database_sql');
+                let DOCUMENTATIONS_folder = resource_folder.folder("DOCUMENTATIONS");
+
+
+                let css_folder = view_folder.folder("css");
+                let error_folder = view_folder.folder("error"); // view/error  ==> that means error folder is inside the view folder
+                let js_folder = view_folder.folder("js");
+                let static_folder = view_folder.folder("static");
+                let uploads_folder = view_folder.folder("uploads");
+
+
+                let image_folder = static_folder.folder("image");
+
+
+                let js_database_error_folder = js_folder.folder("database_error");
+                let css_database_error_folder = css_folder.folder("database_error");
+
+
+                let database_folder = database_sql_folder.folder("database");
+                let diagram_folder = database_sql_folder.folder("diagram");
+
+                let doc_file_folder = DOCUMENTATIONS_folder.folder("files");
+                let doc_images_folder = DOCUMENTATIONS_folder.folder("images");
+                let doc_user_story_folder = DOCUMENTATIONS_folder.folder("user_story");
+
+
+                // Root Files
+                projectFolder.file('.htaccess', PHP_Project_Structure.htaccess);
+                projectFolder.file('index.php', PHP_Project_Structure.index);
+                projectFolder.file('Project Description.html', PHP_Project_Structure.Project_Description_html);
+                projectFolder.file('routes.php', PHP_Project_Structure.routes);
+                projectFolder.file('README.md', PHP_Project_Structure.README);
+                projectFolder.file('LICENSE', PHP_Project_Structure.LICENSE);
+
+
+                // Controller Files
+                controller_folder.file('LoginController.php', PHP_Project_Structure.LoginController);
+                controller_folder.file('LogoutController.php', PHP_Project_Structure.LogoutController);
+                controller_folder.file('TestController.php', PHP_Project_Structure.TestController);
+
+
+                // model files
+                model_folder.file('CalculationRepo.php', PHP_Project_Structure.CalculationRepo);
+                model_folder.file('db_connect.php', PHP_Project_Structure.db_connect);
+                model_folder.file('userRepo.php', PHP_Project_Structure.userRepo);
+
+                // view -> css -> database_error Folder Files
+                css_database_error_folder.file('style.css', PHP_Project_Structure.style_css);
+
+                // view -> error Folder Files
+                error_folder.file('_403_forbidden_error.php', PHP_Project_Structure._403_forbidden_error);
+                error_folder.file('_404_not_found_error.php', PHP_Project_Structure._404_not_found_error);
+                error_folder.file('_500_internal_server_error.php', PHP_Project_Structure._500_internal_server_error);
+                error_folder.file('_database_error.php', PHP_Project_Structure._database_error);
+
+                // view -> js -> database_error Folder Files
+                js_database_error_folder.file('script.js', PHP_Project_Structure.script_js);
+
+                // view files
+                view_folder.file('Data_Provider.php', PHP_Project_Structure.Data_Provider);
+                view_folder.file('Frontend_Test.php', PHP_Project_Structure.Frontend_Test);
+                view_folder.file('Loader.php', PHP_Project_Structure.Loader);
+                view_folder.file('Login.php', PHP_Project_Structure.Login);
+                view_folder.file('Signup_Decider.php', PHP_Project_Structure.Signup_Decider);
+
+                // resource  -> database_sql Folder Files
+                database_sql_folder.file('project_database_sql.sql', PHP_Project_Structure.project_database_sql);
+
+                // resource  -> DOCUMENTATIONS Folder Files
+                doc_file_folder.file('Files_List.txt',PHP_Project_Structure.Files_List);
+                doc_images_folder.file('Images_List.txt',PHP_Project_Structure.Images_List);
+                doc_user_story_folder.file('Images_List.txt',PHP_Project_Structure.Project_Details);
+                DOCUMENTATIONS_folder.file('Project Manual.txt',PHP_Project_Structure.Project_Manual);
+
+                // resource Folder Files
+                resource_folder.file('Folder_Structure.txt',PHP_Project_Structure.Folder_Structure);
+
+
+            } else {
+                console.error("Error: projectConfigs is not loaded.");
+            }
+
+        } else if (selectedProject === "java-cli") {
+
+            // ✅ Use Configs from /Java/index.js
+            if (typeof PHP_Project_Structure !== "undefined" && PHP_Project_Structure) {
+                // FOLDERS ==> Root -> resources, src || resources -> database || src -> resources, main, lib || main -> services, util, entity, model
+
+                //  CREATING FOLDERS
+                let root_resources_folder = projectFolder.folder("resources");
+                let src_folder = projectFolder.folder("src");
+
+                let database_folder = root_resources_folder.folder("database");
+
+
+                let src_resources_folder = src_folder.folder("resources");
+                let main_folder = src_folder.folder("main");
+                let lib_folder = src_folder.folder("lib");
+
+
+                let service_folder = main_folder.folder("service");
+                let util_folder = main_folder.folder("util");
+                let entity_folder = main_folder.folder("entity");
+                let model_folder = main_folder.folder("model");
+
+
+                // Root Folder Files
+                projectFolder.file('.gitignore',Java_Project_Structure.gitignore);
+                projectFolder.file('README.md',Java_Project_Structure.README);
+                projectFolder.file('run.bat',Java_Project_Structure.run);
+                projectFolder.file(projectTitle+'.iml',Java_Project_Structure.Project_Name_iml);
+
+
+                // resources -> database Files
+                database_folder.file('database.sql',Java_Project_Structure.database_sql);
+
+                // resources Folder Files
+                root_resources_folder.file('Folder_Structure.txt',Java_Project_Structure.Folder_Structure);
+
+                // src -> resources Folder Files
+                src_resources_folder.file('config.properties',Java_Project_Structure.config_properties);
+
+                // src -> main -> entity Folder Files
+                entity_folder.file('User.java',Java_Project_Structure.User_java);
+
+                // src -> main -> model Folder Files
+                model_folder.file('DatabaseConfig.java',Java_Project_Structure.DatabaseConfig);
+                model_folder.file('UserRepo.java',Java_Project_Structure.UserRepo);
+
+                // src -> main -> service Folder Files
+                service_folder.file('UserService.java',Java_Project_Structure.UserService);
+
+                // src -> main -> util Folder Files
+                util_folder.file('DBUtils.java',Java_Project_Structure.DBUtils);
+                util_folder.file('FunctionUtils.java',Java_Project_Structure.FunctionUtils);
+                util_folder.file('Object_Provider.java',Java_Project_Structure.Object_Provider);
+                util_folder.file('StringUtils.java',Java_Project_Structure.StringUtils);
+
+                // src -> main Folder Files
+                main_folder.file('Main.java',Java_Project_Structure.Main);
+            } else {
+                console.error("Error: projectConfigs is not loaded.");
+            }
+
+        } else if (selectedProject === "django") {
+            srcFolder.file("manage.py", "# Django project initialized\n\nprint('Django project ready!')");
+            configFolder.file("settings.py", "# Django settings\n\nDEBUG = True\nDATABASES = {}\n");
+        } else if (selectedProject === "python") {
+            srcFolder.file("main.py", "# Python Main File\n\nprint('Python project initialized!')");
+            configFolder.file("config.yaml", "database: localhost\nuser: admin\npassword: secret\n");
+        } else if (selectedProject === "cpp") {
+
+
+
+
+        }
+
+        // Return the zip object for download later
+        return zip;
+    }
+
+    // Button click handler
+    $('.order').click(function (e) {
+        let button = $(this);
+        let zip;
+
+        if (!button.hasClass('animate')) {
+            // Run generateProject and check validity
+            zip = generateProject();
+            if (!zip) return; // Do not proceed if inputs are invalid
+
+            button.addClass('animate');
+
+            // Trigger download after animation completes
+            setTimeout(() => {
+                zip.generateAsync({ type: "blob" }).then(function (content) {
+                    let a = document.createElement("a");
+                    a.href = URL.createObjectURL(content);
+                    a.download = document.getElementById("projectTitle").textContent.trim() + ".zip";
+                    a.click();
+                });
+                button.removeClass('animate');
+            }, 10000);
+        }
+    });
+
+</script>
+
+
+
+
+</body>
+</html>
