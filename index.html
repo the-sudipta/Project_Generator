@@ -852,6 +852,83 @@ IF EXIST node_modules (
         }
     });
 
+
+    document.getElementById("projectTitle").addEventListener("beforeinput", function (e) {
+        if (e.inputType === "insertText" && e.data) {
+            e.preventDefault(); // Prevent default input behavior
+
+            let inputDiv = e.target;
+            let char = e.data === " " ? "\u00A0" : e.data; // Preserve spaces
+
+            let span = document.createElement("span");
+            span.textContent = char;
+            span.style.position = "absolute";
+            span.style.opacity = "0";
+            span.style.transform = "translateY(-100vh)";
+            span.style.transition = "opacity 0.3s ease, transform 1s ease-out";
+            span.style.color = "cyan";
+            span.style.fontSize = "1.1em";
+
+            let rect = inputDiv.getBoundingClientRect();
+            let computedStyle = window.getComputedStyle(inputDiv);
+            let paddingTop = parseFloat(computedStyle.paddingTop);
+            let fontSize = parseFloat(computedStyle.fontSize);
+            let lineHeight = parseFloat(computedStyle.lineHeight) || fontSize * 1.2;
+
+            // 🔥 Set correct X position based on text length
+            let charX = rect.left + 10 + (inputDiv.innerText.length * fontSize * 0.6);
+
+            // ✅ Adjust Y-position **20px higher**
+            let finalY = rect.top + paddingTop + (lineHeight / 2) - 100 + window.scrollY; // Increased upward adjustment
+
+
+            span.style.left = `${charX}px`;
+            document.body.appendChild(span);
+
+            // 🎯 Start falling animation to land inside input field at adjusted height
+            setTimeout(() => {
+                span.style.opacity = "1";
+                span.style.transform = `translateY(${finalY - rect.top}px)`; // Adjusted Y
+            }, 10);
+
+            setTimeout(() => {
+                let newSpan = document.createElement("span");
+                newSpan.textContent = char;
+                newSpan.style.color = "cyan";
+                newSpan.style.fontSize = "1.1em";
+
+                if (inputDiv.innerText.trim() === "") {
+                    inputDiv.innerHTML = "";
+                }
+
+                inputDiv.appendChild(newSpan);
+                document.body.removeChild(span);
+
+                // Maintain cursor position at the end
+                let range = document.createRange();
+                let selection = window.getSelection();
+                range.setStart(inputDiv, inputDiv.childNodes.length);
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }, 1000);
+        }
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </script>
 
 
