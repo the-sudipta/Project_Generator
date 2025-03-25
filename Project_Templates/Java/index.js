@@ -31,7 +31,7 @@ CREATE TABLE users (
 |   |   |-- 📄 Main.java
 |   |-- 📁 lib
 |-- 📄 run.bat
-|-- 📄 [YOUR_PROJECT_NAME].iml
+|-- 📄 YOUR_PROJECT_NAME.iml
 |-- 📄 .gitignore
 |-- 📄 README.md
     `,

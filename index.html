@@ -10,6 +10,7 @@
     <!-- ✅ Load /PHP/index.js FIRST so projectConfigs is available -->
     <script src="Project_Templates/PHP/index.js"></script>
     <script src="Project_Templates/Java/index.js"></script>
+    <script src="Project_Templates/C++/index.js"></script>
 
     <style>
 
@@ -751,7 +752,7 @@ IF EXIST node_modules (
         } else if (selectedProject === "java-cli") {
 
             // ✅ Use Configs from /Java/index.js
-            if (typeof PHP_Project_Structure !== "undefined" && PHP_Project_Structure) {
+            if (typeof Java_Project_Structure !== "undefined" && Java_Project_Structure) {
                 // FOLDERS ==> Root -> resources, src || resources -> database || src -> resources, main, lib || main -> services, util, entity, model
 
                 //  CREATING FOLDERS
@@ -783,7 +784,14 @@ IF EXIST node_modules (
                 database_folder.file('database.sql',Java_Project_Structure.database_sql);
 
                 // resources Folder Files
-                root_resources_folder.file('Folder_Structure.txt',Java_Project_Structure.Folder_Structure);
+
+                // Replace the project name dynamically in CMakeLists.txt
+                let folderStructureContent = Java_Project_Structure.Folder_Structure;
+
+                // Replace the placeholder with the actual project name dynamically
+                folderStructureContent = folderStructureContent.replace(/YOUR_PROJECT_NAME/g, projectTitle);
+
+                root_resources_folder.file('Folder_Structure.txt',folderStructureContent);
 
                 // src -> resources Folder Files
                 src_resources_folder.file('config.properties',Java_Project_Structure.config_properties);
@@ -818,8 +826,39 @@ IF EXIST node_modules (
             configFolder.file("config.yaml", "database: localhost\nuser: admin\npassword: secret\n");
         } else if (selectedProject === "cpp") {
 
+            // ✅ Use Configs from /Java/index.js
+            if (typeof C_plus_plus_Project_Structure !== "undefined" && C_plus_plus_Project_Structure) {
+                // FOLDERS ==> Root -> resources, build
+
+                //  CREATING FOLDERS
+                let build_folder = projectFolder.folder("build");
+                let resources_folder = projectFolder.folder("resources");
 
 
+                resources_folder.file('Folder_Structure.txt', C_plus_plus_Project_Structure.Folder_Structure);
+
+
+                // Root Folder Files
+                projectFolder.file('.gitignore',C_plus_plus_Project_Structure.gitignore);
+                projectFolder.file('README.md',C_plus_plus_Project_Structure.README);
+                projectFolder.file('run.bat',C_plus_plus_Project_Structure.run);
+
+                projectFolder.file('main.cpp',C_plus_plus_Project_Structure.main);
+                projectFolder.file('User.cpp',C_plus_plus_Project_Structure.user_cpp);
+                projectFolder.file('User.h',C_plus_plus_Project_Structure.user_h);
+
+                // Replace the project name dynamically in CMakeLists.txt
+                let cmakeListsContent = C_plus_plus_Project_Structure.CMakeLists;
+
+                // Replace the placeholder with the actual project name dynamically
+                cmakeListsContent = cmakeListsContent.replace(/C_Plus_Plus_Template/g, projectTitle);
+
+                projectFolder.file('CMakeLists.txt',cmakeListsContent);
+
+
+            } else {
+                console.error("Error: projectConfigs is not loaded.");
+            }
 
         }
 
