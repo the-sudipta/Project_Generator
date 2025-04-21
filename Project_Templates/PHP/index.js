@@ -32,6 +32,33 @@ $backend_routes = [
     `,
     README: ``,
     LICENSE: ``,
+    utility_functions: `
+<?php
+
+global $routes;
+require 'routes.php';
+session_start(); // Make sure session is started
+
+function show_error_page($error_location, $error_message, $error_type) {
+
+
+    $_SESSION['error_location'] = $error_location;
+    $_SESSION['error_message'] = $error_message;
+
+    global $routes;
+    if ($error_type === 'database_error') {
+        header("Location: {$routes['database_error']}");
+        exit;
+    } elseif ($error_type === 'internal_server_error') {
+        header("Location: {$routes['internal_server_error']}");
+        exit;
+    } else {
+        // Fallback: if route not found, show plain error
+        echo "<h2>Error:</h2><p>{$error_message}</p><p>Location: {$error_location}</p>";
+        exit;
+    }
+}
+    `,
 
     // controller Folder Files
     LoginController: `
@@ -202,9 +229,11 @@ function db_conn()
 }
     `,
     userRepo: `
+
 <?php
 
 require_once __DIR__ . '/../model/db_connect.php';
+require_once dirname(__DIR__) . '/utility_functions.php'; // Responsible for show_error_page() Function
 
 require __DIR__ . '/../routes.php';
 global $routes;
@@ -222,12 +251,9 @@ function findAllUsers()
 
         // Check if the query was successful
         if (!$result) {
-//            throw new Exception("Query failed: " . $conn->error);
-            $_SESSION['error_location'] = "Database -> userRepo -> findAllUsers()";
-            $_SESSION['database_error'] = "Query failed: " . $conn->error;
-            global $routes;
-            $database_error_page = $routes["database_error"];
-            header("Location: {$database_error_page}");
+            $error_location = "Database -> userRepo -> findAllUsers()";
+            $error_message = "Query failed: " . $conn->error;
+            show_error_page($error_location, $error_message, "database_error");
         }
 
         $rows = array();
@@ -239,18 +265,15 @@ function findAllUsers()
 
         // Check for an empty result set
         if (empty($rows)) {
-//            throw new Exception("No rows found in the 'user' table.");
-            $_SESSION['error_location'] = "Database -> userRepo -> findAllUsers()";
-            $_SESSION['database_error'] = "No rows found in the 'user' table.";
-            global $routes;
-            $database_error_page = $routes["database_error"];
-            header("Location: {$database_error_page}");
+            return null;
         }
 
         return $rows;
     } catch (Exception $e) {
-        echo "Error: " . $e->getMessage();
-        return null;
+//        echo "Error: " . $e->getMessage();
+        $error_location = "Database -> userRepo -> findAllUsers()";
+        $error_message = "Error: " . $e->getMessage();
+        show_error_page($error_location, $error_message, "database_error");
     } finally {
         // Close the database connection
         $conn->close();
@@ -294,7 +317,10 @@ function findUserByEmailAndPassword($email, $password) {
             return null;
         }
     } catch (Exception $e) {
-        echo $e->getMessage();
+//        echo $e->getMessage();
+        $error_location = "Database -> userRepo -> findAllUsers()";
+        $error_message = $e->getMessage();
+        show_error_page($error_location, $error_message, "database_error");
         return null;
     } finally {
         // Close the database connection
@@ -314,13 +340,10 @@ function findUserByUserID($id)
         // Check if the prepare statement was successful
         if (!$stmt) {
 //            throw new Exception("Prepare statement failed: " . $conn->error);
-            $_SESSION['error_location'] = "Database -> userRepo -> findUserByUserID()";
-            $_SESSION['database_error'] = "Prepare statement failed: " . $conn->error;
-            global $routes;
-            $database_error_page = $routes["database_error"];
-            header("Location: {$database_error_page}");
+            $error_location = "Database -> userRepo -> findUserByUserID()";
+            $error_message = "Prepare statement failed: " . $conn->error;
+            show_error_page($error_location, $error_message, "database_error");
         }
-
         // Bind the parameter
         $stmt->bind_param("i", $id);
 
@@ -335,26 +358,16 @@ function findUserByUserID($id)
 
         // Check for an empty result set
         if (!$user) {
-//            throw new Exception("No user found with ID: " . $id);
-            $_SESSION['error_location'] = "Database -> userRepo -> findUserByID()";
-            $_SESSION['database_error'] = "No user found with ID: " . $id;
-            global $routes;
-            $database_error_page = $routes["database_error"];
-            header("Location: {$database_error_page}");
+            return null;
         }
-
         // Close the statement
         $stmt->close();
-
         return $user;
     } catch (Exception $e) {
 //        echo "Error: " . $e->getMessage();
-        $_SESSION['error_location'] = "Database -> userRepo -> findUserByID()";
-        $_SESSION['database_error'] = $e->getMessage();
-        global $routes;
-        $database_error_page = $routes["database_error"];
-        header("Location: {$database_error_page}");
-        return null;
+        $error_location = "Database -> userRepo -> findUserByID()";
+        $error_message = "Error : " . $e->getMessage();;
+        show_error_page($error_location, $error_message, "database_error");
     } finally {
         // Close the database connection
         $conn->close();
@@ -372,11 +385,9 @@ function findUserByEmail($email)
         // Check if the prepare statement was successful
         if (!$stmt) {
 //            throw new Exception("Prepare statement failed: " . $conn->error);
-            $_SESSION['error_location'] = "Database -> userRepo -> findUserByEmail()";
-            $_SESSION['database_error'] = "Prepare statement failed: " . $conn->error;
-            global $routes;
-            $database_error_page = $routes["database_error"];
-            header("Location: {$database_error_page}");
+            $error_location = "Database -> userRepo -> findUserByemail()";
+            $error_message = "Prepare statement failed: " . $conn->error;
+            show_error_page($error_location, $error_message, "database_error");
         }
 
         // Bind the parameter
@@ -395,18 +406,14 @@ function findUserByEmail($email)
         if (!$user) {
             return null;
         }
-
         // Close the statement
         $stmt->close();
-
         return $user;
     } catch (Exception $e) {
 //        echo "Error: " . $e->getMessage();
-        $_SESSION['error_location'] = "Database -> userRepo -> findUserByEmail()";
-        $_SESSION['database_error'] = $e->getMessage();
-        global $routes;
-        $database_error_page = $routes["database_error"];
-        return null;
+        $error_location = "Database -> userRepo -> findUserByemail()";
+        $error_message = "Error : " . $e->getMessage();;
+        show_error_page($error_location, $error_message, "database_error");
     } finally {
         // Close the database connection
         $conn->close();
@@ -433,34 +440,33 @@ function updateUser($email, $password, $role, $status, $id)
         // Check if the prepare statement was successful
         if (!$stmt) {
 //            throw new Exception("Prepare statement failed: " . $conn->error);
-            $_SESSION['error_location'] = "Database -> userRepo -> updateUser()";
-            $_SESSION['database_error'] = "Prepare statement failed: " . $conn->error;
-            global $routes;
-            $database_error_page = $routes["database_error"];
-            header("Location: {$database_error_page}");
+            $error_location = "Database -> userRepo -> updateUser()";
+            $error_message = "Prepare statement failed: " . $conn->error;
+            show_error_page($error_location, $error_message, "database_error");
         }
 
         // Bind parameters
         $stmt->bind_param('ssssi', $email, $password, $role, $status, $id);
 
         // Execute the query
-        $stmt->execute();
-
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows < 0) {
+                return false;
+            }
+        } else {
+            return false;
+        }
         // Return true if the update is successful
         return true;
     } catch (Exception $e) {
         // Handle the exception, you might want to log it or return false
 //        echo "Error: " . $e->getMessage();
-        $_SESSION['error_location'] = "Database -> userRepo -> updateUser()";
-        $_SESSION['database_error'] = $e->getMessage();
-        global $routes;
-        $database_error_page = $routes["database_error"];
-        header("Location: {$database_error_page}");
-        return false;
+        $error_location = "Database -> userRepo -> updateUser()";
+        $error_message = "Error: " . $e->getMessage();
+        show_error_page($error_location, $error_message, "database_error");
     } finally {
         // Close the statement
         $stmt->close();
-
         // Close the database connection
         $conn->close();
     }
@@ -482,34 +488,34 @@ function updateUserStatus($status, $id)
         // Check if the prepare statement was successful
         if (!$stmt) {
 //            throw new Exception("Prepare statement failed: " . $conn->error);
-            $_SESSION['error_location'] = "Database -> userRepo -> updateUserStatus()";
-            $_SESSION['database_error'] = "Prepare statement failed: " . $conn->error;
-            global $routes;
-            $database_error_page = $routes["database_error"];
-            header("Location: {$database_error_page}");
+            $error_location = "Database -> userRepo -> updateUserStatus()";
+            $error_message = "Prepare statement failed: " . $conn->error;
+            show_error_page($error_location, $error_message, "database_error");
         }
 
         // Bind parameters
         $stmt->bind_param('si', $status, $id);
 
         // Execute the query
-        $stmt->execute();
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows < 0) {
+                return false;
+            }
+        } else {
+            return false;
+        }
 
         // Return true if the update is successful
         return true;
     } catch (Exception $e) {
         // Handle the exception, you might want to log it or return false
 //        echo "Error: " . $e->getMessage();
-        $_SESSION['error_location'] = "Database -> userRepo -> updateUserStatus()";
-        $_SESSION['database_error'] = $e->getMessage();
-        global $routes;
-        $database_error_page = $routes["database_error"];
-        header("Location: {$database_error_page}");
-        return false;
+        $error_location = "Database -> userRepo -> updateUserStatus()";
+        $error_message = "Error: " . $e->getMessage();
+        show_error_page($error_location, $error_message, "database_error");
     } finally {
         // Close the statement
         $stmt->close();
-
         // Close the database connection
         $conn->close();
     }
@@ -530,11 +536,9 @@ function deleteUser($id) {
         // Check if the prepare statement was successful
         if (!$stmt) {
 //            throw new Exception("Prepare statement failed: " . $conn->error);
-            $_SESSION['error_location'] = "Database -> userRepo -> deleteUser()";
-            $_SESSION['database_error'] = "Prepare statement failed: " . $conn->error;
-            global $routes;
-            $database_error_page = $routes["database_error"];
-            header("Location: {$database_error_page}");
+            $error_location = "Database -> userRepo -> deleteUser()";
+            $error_message = "Prepare statement failed: " . $conn->error;
+            show_error_page($error_location, $error_message, "database_error");
         }
 
         // Bind parameter
@@ -548,11 +552,9 @@ function deleteUser($id) {
     } catch (Exception $e) {
         // Handle the exception, you might want to log it or return false
 //        echo "Error: " . $e->getMessage();
-        $_SESSION['error_location'] = "Database -> userRepo -> deleteUser()";
-        $_SESSION['database_error'] = $e->getMessage();
-        global $routes;
-        $database_error_page = $routes["database_error"];
-        header("Location: {$database_error_page}");
+//        $error_location = "Database -> userRepo -> deleteUser()";
+//        $error_message = $e->getMessage();
+//        show_error_page($error_location, $error_message, "database_error");
         return false;
     } finally {
         // Close the statement
@@ -564,27 +566,32 @@ function deleteUser($id) {
 }
 
 
-function createUser($email, $password, $role, $created_at, $status) {
+function createUser($email, $password, $role, $status) {
     $conn = db_conn();
 
     // Hash the password using a secure hashing algorithm (e.g., password_hash)
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
     // Construct the SQL query
-    $insertQuery = "INSERT INTO \`user\` (email, password, role, created_at, status) VALUES (?, ?, ?, ?, ?)";
+    $insertQuery = "INSERT INTO \`user\` (email, password, role, status) VALUES (?, ?, ?, ?)";
 
     try {
+        $newUserId = -1;
         // Prepare the statement
         $stmt = $conn->prepare($insertQuery);
 
         // Bind parameters
-        $stmt->bind_param('sssss', $email, $hashedPassword, $role, $created_at, $status);
+        $stmt->bind_param('ssss', $email, $hashedPassword, $role, $status);
 
         // Execute the query
         $stmt->execute();
 
         // Return the ID of the newly inserted user
         $newUserId = $stmt->insert_id;
+
+        if($newUserId < 0){
+            return -1;
+        }
 
         // Close the statement
         $stmt->close();
@@ -593,12 +600,9 @@ function createUser($email, $password, $role, $created_at, $status) {
     } catch (Exception $e) {
         // Handle the exception, you might want to log it or return false
 //        echo "Error: " . $e->getMessage();
-        $_SESSION['error_location'] = "Database -> userRepo -> createUser()";
-        $_SESSION['database_error'] = $e->getMessage();
-        global $routes;
-        $database_error_page = $routes["database_error"];
-        header("Location: {$database_error_page}");
-        return -1;
+        $error_location = "Database -> userRepo -> createUser()";
+        $error_message = $e->getMessage();
+        show_error_page($error_location, $error_message, "database_error");
     } finally {
         // Close the database connection
         $conn->close();
