@@ -41,15 +41,15 @@ session_start(); // Make sure session is started
 
 function show_error_page($error_location, $error_message, $error_type) {
 
-
-    $_SESSION['error_location'] = $error_location;
-    $_SESSION['error_message'] = $error_message;
-
     global $routes;
     if ($error_type === 'database_error') {
+        $_SESSION['error_location'] = $error_location;
+        $_SESSION['error_message'] = $error_message;
         header("Location: {$routes['database_error']}");
         exit;
     } elseif ($error_type === 'internal_server_error') {
+        $_SESSION['internal_server_error_location'] = $error_location;
+        $_SESSION['internal_server_error_message'] = $error_message;
         header("Location: {$routes['internal_server_error']}");
         exit;
     } else {
@@ -58,111 +58,131 @@ function show_error_page($error_location, $error_message, $error_type) {
         exit;
     }
 }
+
+
+// Custom error handler function to catch PHP errors and convert them to exceptions
+function customErrorHandler($errno, $errstr, $errfile, $errline) {
+    // You can customize the error levels to convert specific types of errors to exceptions
+    if ($errno == E_WARNING || $errno == E_NOTICE || $errno == E_ERROR) {
+        // You can throw an exception with custom error message or log the error.
+        throw new Exception("Error [$errno]: $errstr in $errfile on line $errline");
+    }
+    // For other errors, you can handle them or log them.
+    return true; // Return true to prevent PHP's internal error handler from running
+}
+function setCustomErrorHandler() {
+    // Set the custom error handler globally
+    set_error_handler("customErrorHandler");
+}
+function restoreCustomErrorHandler() {
+    // Restore the original PHP error handler if needed
+    restore_error_handler();
+}
     `,
 
     // controller Folder Files
     LoginController: `
 <?php
+try{
 
-//include_once '../Navigation_Links.php';
-global $routes;
-require '../routes.php';
+    require_once dirname(__DIR__) . '/utility_functions.php'; // Responsible for show_error_page() Function
+    setCustomErrorHandler();
+    global $routes;
+    require '../routes.php';
 
-
-require_once dirname(__DIR__) . '/model/userRepo.php';
-
-
-@session_start();
+    require_once dirname(__DIR__) . '/model/userRepo.php';
 
 
-$Login_page = $routes['login'];
-$Admin_Dashboard_page = $routes['admin_dashboard'];
-$HIS_Dashboard_page = $routes['his_dashboard'];
-$PACS_Dashboard_page = $routes['pacs_dashboard'];
-$RIS_Dashboard_page = $routes['ris_dashboard'];
-$errorMessage = "";
+
+    @session_start();
+
+
+    $Login_page = $routes['login'];
+    $Admin_Dashboard_page = $routes['admin_dashboard'];
+    $Salesman_dashboard_page = $routes['salesman_dashboard'];
+
+    $errorMessage = "";
 
 //echo $_SERVER['REQUEST_METHOD'];
-$everythingOKCounter = 0;
+    $everythingOKCounter = 0;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    echo "Got Req";
+        echo "Got Req";
 
-    //* Email Validation
-    $email = $_POST['email'];
-    if (empty($email)) {
+        //* Email Validation
+        $Email = $_POST['Email'];
+        if (empty($Email)) {
 
-        $everythingOK = FALSE;
-        $everythingOKCounter += 1;
+            $everythingOK = FALSE;
+            $everythingOKCounter += 1;
 
-        echo '<br>Email Error : Email is Empty<br>';
-        $errorMessage = urldecode("Email has more than 120 Characters or It is empty");
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo '<br>Email Error : Email is Empty<br>';
+            $errorMessage = urldecode("Email has more than 120 Characters or It is empty");
+        } else {
+            $everythingOK = TRUE;
+        }
 
-        $everythingOK = FALSE;
-        $everythingOKCounter += 1;
-        echo '<br>Email Error : Email does not have \`@\`<br>';
-        $errorMessage = urldecode("Email does not have \`@\`");
-    } else {
-        $everythingOK = TRUE;
-    }
+        //* Password Validation
+        $password = $_POST['password'];
+        if (empty($password) || strlen($password) < 8) {
+            // check if password size in 8 or more and  check if it is empty
 
-    //* Password Validation
-    $password = $_POST['password'];
-    if (empty($password) || strlen($password) < 8) {
-        // check if password size in 8 or more and  check if it is empty
-
-        $everythingOK = FALSE;
-        $everythingOKCounter += 1;
-        echo '<br>Password Error : Password has less than 8 Characters or It is empty<br>';
-        $errorMessage = urldecode("Password has less than 8 Characters or It is empty");
-    } else {
-        $everythingOK = TRUE;
-    }
+            $everythingOK = FALSE;
+            $everythingOKCounter += 1;
+            echo '<br>Password Error : Password has less than 8 Characters or It is empty<br>';
+            $errorMessage = urldecode("Password has less than 8 Characters or It is empty");
+        } else {
+            $everythingOK = TRUE;
+        }
 
 
-    if ($everythingOK && $everythingOKCounter === 0) {
-        $data = findUserByEmailAndPassword($email, $password);
+        if ($everythingOK && $everythingOKCounter === 0) {
+            $data = findUserByEmailAndPassword($Email, $password);
 
 //        echo '<br><br>';
-        echo '<br>Everything is ok<br>';
-        echo '<br>ID found = ' . isset($data["id"]) . ' <br>';
-        if ($data && isset($data["id"])) {
-            $_SESSION["data"] = $data;
-            $_SESSION["user_id"] = $data["id"];
-            $_SESSION["user_role"] = $data["role"];
-            $_SESSION["user_status"] = $data["status"];
+            echo '<br>Everything is ok<br>';
+            echo '<br>ID found = ' . isset($data["id"]) . ' <br>';
+            if ($data && isset($data["id"])) {
+                $_SESSION["data"] = $data;
+                $_SESSION["user_id"] = $data["id"];
+                $_SESSION["user_role"] = $data["role"];
+                $_SESSION["user_status"] = $data["status"];
 
-            if (strtolower($data['role']) === 'admin') {
-                header("Location: {$Admin_Dashboard_page}");
-                exit;
-            } elseif (strtolower($data['role']) === 'his'){
-                header("Location: {$HIS_Dashboard_page}");
-                exit;
-            }elseif (strtolower($data['role']) === 'pacs'){
-                header("Location: {$PACS_Dashboard_page}");
-                exit;
-            }elseif (strtolower($data['role']) === 'ris'){
-                header("Location: {$RIS_Dashboard_page}");
-                exit;
+                if (strtolower($data['role']) === 'admin') {
+                    header("Location: {$Admin_Dashboard_page}");
+                    exit;
+                } elseif (strtolower($data['role']) === 'salesman'){
+                    header("Location: {$Salesman_dashboard_page}");
+                    exit;
+                } else {
+                    $errorMessage = urldecode("Role did not match to any valid roles");
+                    header("Location: {$Login_page}?message=$errorMessage");
+                    exit;
+                }
             } else {
-                $errorMessage = urldecode("Role did not match to any valid roles");
+                echo '<br>Returning to Login page because Email Password did not match<br>';
+                $errorMessage = urldecode("Email and Password did not match");
                 header("Location: {$Login_page}?message=$errorMessage");
                 exit;
             }
         } else {
-            echo '<br>Returning to Login page because ID Password did not match<br>';
-            $errorMessage = urldecode("Email and Password did not match");
+            echo '<br>Returning to Login page because The data user provided is not properly validated like 
+                in password: 1-upper_case, 1-lower_case, 1-number, 1-special_character and at least 8 character long it must be provided <br>';
             header("Location: {$Login_page}?message=$errorMessage");
             exit;
         }
-    } else {
-        echo '<br>Returning to Login page because The data user provided is not properly validated like 
-                in password: 1-upper_case, 1-lower_case, 1-number, 1-special_character and at least 8 character long it must be provided <br>';
-        header("Location: {$Login_page}?message=$errorMessage");
-        exit;
+
+
     }
+
+} catch (Throwable $e){
+
+//    Redirect to 500 Internal Server Error Page
+
+    $error_location = "LoginController";
+    $error_message = $e->getMessage();
+    show_error_page($error_location, $error_message, "internal_server_error");
 
 
 }
@@ -1513,8 +1533,8 @@ $logout_controller = $backend_routes["logout_controller"];
 
 
 
-if(isset($_SESSION['backend_error']) && isset($_SESSION['backend_error_location'])){
-    $backend_error = $_SESSION['backend_error'];
+if(isset($_SESSION['internal_server_error_message']) && isset($_SESSION['internal_server_error_location'])){
+    $backend_error = $_SESSION['internal_server_error_message'];
 }else{
     header("Location: {$logout_controller}");
 }
@@ -1810,7 +1830,7 @@ if(isset($_SESSION['backend_error']) && isset($_SESSION['backend_error_location'
 <!-- partial -->
 <!-- Error message below SVG -->
 <div class="message">Something went wrong! At<br>
-    <span style="color: #ff2e00; "><?php echo $_SESSION['backend_error_location']; ?></span>. <br>
+    <span style="color: #ff2e00; "><?php echo $_SESSION['internal_server_error_location']; ?></span>. <br>
     <p>Issue : <span style="color: #ff2e00;"><?php echo $backend_error; ?></span></p>
 
 </div>
@@ -2465,6 +2485,7 @@ To Print it as pdf, please remember
 |-- 📄 Project Description.html
 |-- 📄 README.md
 |-- 📄 routes.php
+|-- 📄 utility_functions.php
 |-- 📄 .htaccess
 |-- 📄 index.php
 |-- 📄 LICENSE
